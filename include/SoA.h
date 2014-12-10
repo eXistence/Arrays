@@ -60,7 +60,7 @@ namespace johl
 
       detail::SetPointerArray<sizeof...(Args), 0, Args...>::set(arrays, data, n);
 
-      detail::CopyArrays<sizeof...(Args), 0, Args...>::copy(m_arrays, arrays, m_numUsed);
+      detail::MoveArrays<sizeof...(Args), 0, Args...>::copy(m_arrays, arrays, m_numUsed);
 
       free(m_data);
 
@@ -82,6 +82,12 @@ namespace johl
 
       detail::Append<sizeof...(Args), 0, Args...>::append(m_arrays, m_numUsed, args...);
       ++m_numUsed;
+    }
+
+    template<typename... Args2>
+    void append2(Args2... args)
+    {
+      static_assert(sizeof...(Args2) == sizeof...(Args), "number of arguments does not match number of arrays");
     }
 
 

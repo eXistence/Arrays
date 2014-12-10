@@ -196,5 +196,58 @@ namespace detail
       CopyArrays<RemainingTypes - 1, TypeIndex + 1, Rest...>::copy(src_arrays, dst_arrays, num);
     }
   };
+
+
+
+
+
+
+
+  template<class T>
+  typename std::enable_if<std::is_trivially_destructible<T>::value && std::is_trivially_copyable<T>::value, void>::type 
+    moveData(T* dst, const T* src, size_t num)
+  {
+      memcpy(dst, src, sizeof(T) * num);   
+  }
+
+  template<class T>
+  typename std::enable_if<!(std::is_trivially_destructible<T>::value && std::is_trivially_copyable<T>::value), void>::type
+    moveData(T* dst, const T* src, size_t num)
+  {
+      for(size_t i=0; i<num; ++i)
+      {
+        new (&dst[i]) T(std::move(src[i]));
+        src[i]->~T();
+      }
+  }
+
+  
+
+  template<size_t RemainingTypes, size_t TypeIndex, typename... Args>
+  struct MoveArrays;
+
+  template<size_t TypeIndex>
+  struct MoveArrays<0, TypeIndex>
+  {
+    static void copy(void** src_arrays, void** dst_arrays, size_t num)
+    {
+    }
+  };
+
+  template<size_t RemainingTypes, size_t TypeIndex, typename First, typename... Rest>
+  struct MoveArrays<RemainingTypes, TypeIndex, First, Rest...>
+  {
+    static void copy(void** src_arrays, void** dst_arrays, size_t num)
+    {
+      First* src = static_cast<First*>(src_arrays[TypeIndex]);
+      First* dst = static_cast<First*>(dst_arrays[TypeIndex]);
+
+      moveData(dst, src, num);
+//      memcpy(dst, src, sizeof(First)* num);
+
+      MoveArrays<RemainingTypes - 1, TypeIndex + 1, Rest...>::copy(src_arrays, dst_arrays, num);
+    }
+  };
+
 }
 }

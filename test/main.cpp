@@ -9,7 +9,7 @@ int main(int argc, char** argv)
   using std::endl;
 
   SoA<int, char, double> soa;
-  soa.reserve(10);
+//  soa.reserve(10);
 
   int* is = soa.ptr<0>();
   char* cs = soa.ptr<1>();
@@ -17,6 +17,7 @@ int main(int argc, char** argv)
 
   soa.append(1,'2',3);
   soa.append(4,'5',6);
+  soa.append2(1,2,3);
 
   cout << "is[0]: " << is[0] << endl;
   cout << "is[1]: " << is[1] << endl;
