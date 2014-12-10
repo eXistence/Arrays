@@ -46,8 +46,24 @@ namespace johl
 
     ~SoA()
     {
-      if(m_data)
-        free(m_data);
+      clear();
+      free(m_data);
+    }
+
+    size_t size() const
+    {
+      return m_numUsed;
+    }
+
+    size_t capacity() const
+    {
+      return m_numAllocated;
+    }
+
+    void clear()
+    {
+      detail::Clear<sizeof...(Args), 0, Args...>::clear(m_arrays, 0, m_numUsed);
+      m_numUsed = 0;
     }
 
     void reserve(size_t n)
@@ -76,20 +92,38 @@ namespace johl
       return static_cast<typename detail::Get<Index, Args...>::Type*>(m_arrays[Index]);
     }
 
-    void append(Args... args)
+    template<typename... Args2>
+    void append(Args2... args)
     {
+      static_assert(sizeof...(Args2) == sizeof...(Args), "number of arguments does not match number of arrays");
+
       reserve(m_numUsed + 1);
 
-      detail::Append<sizeof...(Args), 0, Args...>::append(m_arrays, m_numUsed, args...);
+      detail::Append<sizeof...(Args), 0, Args...>::append(m_arrays, m_numUsed, std::forward<Args2>(args)...);
       ++m_numUsed;
     }
 
-    template<typename... Args2>
-    void append2(Args2... args)
+
+    void removeAt(size_t index)
     {
-      static_assert(sizeof...(Args2) == sizeof...(Args), "number of arguments does not match number of arrays");
+      detail::Clear<sizeof...(Args), 0, Args...>::clear(m_arrays, index, 1);
+      --m_numUsed;
+      MoveArrays::copy(m_arrays, m_arrays, index+1, index, m_numUsed - index);
     }
 
+    template<typename... Args2>
+    void insertAt(size_t index, Args2... args)
+    {
+      static_assert(sizeof...(Args2) == sizeof...(Args), "number of arguments does not match number of arrays");
+
+      reserve(m_numUsed + 1);
+
+      MoveArrays::copy(m_arrays, m_arrays, index, index+1, m_numUsed - index);
+
+      detail::Append<sizeof...(Args), 0, Args...>::append(m_arrays, index, std::forward<Args2>(args)...);
+
+      ++m_numUsed;
+    }
 
   /*
     template<size_t Index>
@@ -99,6 +133,9 @@ namespace johl
     }
   */
   private:
+    typedef detail::MoveArrays<sizeof...(Args), 0, Args...> MoveArrays;
+
+
     size_t m_numUsed;
     size_t m_numAllocated;
     void*  m_data;  

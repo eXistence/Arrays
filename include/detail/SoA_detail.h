@@ -162,12 +162,15 @@ namespace detail
   template<size_t RemainingTypes, size_t TypeIndex, typename First, typename... Rest>
   struct Append<RemainingTypes, TypeIndex, First, Rest...>
   {
-    static void append(void** arrays, size_t index, First first, Rest ...rest)
+    template<typename FirstArg, typename... RestArgs>
+    static void append(void** arrays, size_t index, FirstArg first, RestArgs ...rest)
     {
       First* data = static_cast<First*>(arrays[TypeIndex]);
-      data[index] = first;
 
-      Append<RemainingTypes-1, TypeIndex+1, Rest...>::append(arrays, index, rest...);
+      //data[index] = first;
+      new (&data[index]) First(first);
+
+      Append<RemainingTypes-1, TypeIndex+1, Rest...>::append(arrays, index, std::forward<RestArgs>(rest)...);
     }
   }; 
 
@@ -207,17 +210,30 @@ namespace detail
   typename std::enable_if<std::is_trivially_destructible<T>::value && std::is_trivially_copyable<T>::value, void>::type 
     moveData(T* dst, const T* src, size_t num)
   {
-      memcpy(dst, src, sizeof(T) * num);   
+      memmove(dst, src, sizeof(T) * num);   
   }
 
   template<class T>
   typename std::enable_if<!(std::is_trivially_destructible<T>::value && std::is_trivially_copyable<T>::value), void>::type
     moveData(T* dst, const T* src, size_t num)
   {
-      for(size_t i=0; i<num; ++i)
+      if(dst < src)
       {
-        new (&dst[i]) T(std::move(src[i]));
-        src[i]->~T();
+        for (size_t i = 0; i < num; ++i)
+        {
+          new (&dst[i]) T(std::move(src[i]));
+          src[i].~T();
+        }
+      }
+      else
+      {
+        for (size_t i = num; i > 0; --i)
+        {
+          size_t index = i-1;
+
+          new (&dst[index]) T(std::move(src[index]));
+          src[index].~T();
+        }
       }
   }
 
@@ -232,6 +248,10 @@ namespace detail
     static void copy(void** src_arrays, void** dst_arrays, size_t num)
     {
     }
+
+    static void copy(void** src_arrays, void** dst_arrays, size_t src_offset, size_t dst_offset, size_t num)
+    {
+    }
   };
 
   template<size_t RemainingTypes, size_t TypeIndex, typename First, typename... Rest>
@@ -239,13 +259,66 @@ namespace detail
   {
     static void copy(void** src_arrays, void** dst_arrays, size_t num)
     {
+      copy(src_arrays, dst_arrays, 0, 0, num);
+    }
+
+    static void copy(void** src_arrays, void** dst_arrays, size_t src_offset, size_t dst_offset, size_t num)
+    {
       First* src = static_cast<First*>(src_arrays[TypeIndex]);
       First* dst = static_cast<First*>(dst_arrays[TypeIndex]);
 
-      moveData(dst, src, num);
-//      memcpy(dst, src, sizeof(First)* num);
+      moveData(&dst[dst_offset], &src[src_offset], num);
+      //      memcpy(dst, src, sizeof(First)* num);
 
-      MoveArrays<RemainingTypes - 1, TypeIndex + 1, Rest...>::copy(src_arrays, dst_arrays, num);
+      MoveArrays<RemainingTypes - 1, TypeIndex + 1, Rest...>::copy(src_arrays, dst_arrays, src_offset, dst_offset, num);
+    }
+  };
+
+
+
+
+
+
+
+
+
+
+  template<class T>
+  typename std::enable_if<std::is_trivially_destructible<T>::value, void>::type
+    destructArrayElements(T* array, size_t num)
+  {
+  }
+
+  template<class T>
+  typename std::enable_if<!std::is_trivially_destructible<T>::value, void>::type
+    destructArrayElements(T* array, size_t num)
+  {
+      for (size_t i = 0; i < num; ++i)
+      {
+        array[i].~T();
+      }
+  }
+
+  template<size_t RemainingTypes, size_t TypeIndex, typename... Args>
+  struct Clear;
+
+  template<size_t TypeIndex>
+  struct Clear<0, TypeIndex>
+  {
+    static void clear(void** arrays, size_t indexOffset, size_t num)
+    {
+    }
+  };
+
+  template<size_t RemainingTypes, size_t TypeIndex, typename First, typename... Rest>
+  struct Clear<RemainingTypes, TypeIndex, First, Rest...>
+  {
+    static void clear(void** arrays, size_t indexOffset, size_t num)
+    {
+      First* array = static_cast<First*>(arrays[TypeIndex]);
+      destructArrayElements(&array[indexOffset], num);
+
+      Clear<RemainingTypes-1, TypeIndex+1, Rest...>::clear(arrays, indexOffset, num);
     }
   };
 
