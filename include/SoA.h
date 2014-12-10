@@ -55,16 +55,19 @@ namespace johl
       if(m_numAllocated >= n)
         return;
 
-      const size_t bytes = detail::Size<Args...>::value * n;
+      void* data = malloc(detail::Size<Args...>::value * n);
+      void* arrays[sizeof...(Args)];
 
-      void* data = malloc(bytes);
+      detail::SetPointerArray<sizeof...(Args), 0, Args...>::set(arrays, data, n);
 
-      if(m_data)
-        free(m_data);
+      detail::CopyArrays<sizeof...(Args), 0, Args...>::copy(m_arrays, arrays, m_numUsed);
+
+      free(m_data);
 
       m_data = data;
+      memcpy(&m_arrays[0], &arrays[0], sizeof(m_arrays));
 
-      detail::Foo<Args...>::initPointers((char**)&m_arrays[0], (char*)m_data, n);
+      m_numAllocated = n;
     }
 
     template<size_t Index>
@@ -72,12 +75,17 @@ namespace johl
     {
       return static_cast<typename detail::Get<Index, Args...>::Type*>(m_arrays[Index]);
     }
-  /*
+
     void append(Args... args)
     {
       reserve(m_numUsed + 1);
+
+      detail::Append<sizeof...(Args), 0, Args...>::append(m_arrays, m_numUsed, args...);
+      ++m_numUsed;
     }
 
+
+  /*
     template<size_t Index>
     auto get(size_t i)
     {

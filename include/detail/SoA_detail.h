@@ -118,27 +118,83 @@ namespace detail
 
 
 
-  template<typename... Args>
-  struct Foo;
+  template<size_t RemainingTypes, size_t TypeIndex, typename... Args>
+  struct SetPointerArray;
 
-  template<typename First, typename... Rest>
-  struct Foo<First, Rest...>
+  template<size_t TypeIndex, typename... Args>
+  struct SetPointerArray<0, TypeIndex, Args...>
   {
-    static void initPointers(char** pointers, char* data, size_t num)
+    static void set(void** arrays, void* data, size_t num)
     {
-      pointers[0] = data;
-      Foo<Rest...>::initPointers(&pointers[1], &data[Offset<1, First, Rest...>::value * num], num);
     }
   };
 
-  template<typename First>
-  struct Foo<First>
+  template<size_t RemainingTypes, size_t TypeIndex, typename... Args>
+  struct SetPointerArray<RemainingTypes, TypeIndex, Args...>
   {
-    static void initPointers(char** pointers, char* data, size_t /*num*/)
+    static void set(void** arrays, void* data, size_t num)
     {
-      pointers[0] = data;
+      char** arr = (char**)arrays;
+      char*  d = (char*)data;
+
+      arr[TypeIndex] = &d[ Offset<TypeIndex, Args...>::value * num ];
+
+      SetPointerArray<RemainingTypes-1, TypeIndex+1, Args...>::set(arrays, data, num);
+    }
+
+  };
+
+
+
+
+
+  template<size_t RemainingTypes, size_t TypeIndex, typename... Args>
+  struct Append;
+
+  template<size_t TypeIndex>
+  struct Append<0, TypeIndex>
+  {
+    static void append(void** /*arrays*/, size_t /*index*/)
+    {
     }
   };
 
+  template<size_t RemainingTypes, size_t TypeIndex, typename First, typename... Rest>
+  struct Append<RemainingTypes, TypeIndex, First, Rest...>
+  {
+    static void append(void** arrays, size_t index, First first, Rest ...rest)
+    {
+      First* data = static_cast<First*>(arrays[TypeIndex]);
+      data[index] = first;
+
+      Append<RemainingTypes-1, TypeIndex+1, Rest...>::append(arrays, index, rest...);
+    }
+  }; 
+
+
+  template<size_t RemainingTypes, size_t TypeIndex, typename... Args>
+  struct CopyArrays;
+
+  template<size_t TypeIndex>
+  struct CopyArrays<0, TypeIndex>
+  {
+    static void copy(void** src_arrays, void** dst_arrays, size_t num)
+    {
+    }
+  };
+
+  template<size_t RemainingTypes, size_t TypeIndex, typename First, typename... Rest>
+  struct CopyArrays<RemainingTypes, TypeIndex, First, Rest...>
+  {
+    static void copy(void** src_arrays, void** dst_arrays, size_t num)
+    {
+      First* src = static_cast<First*>(src_arrays[TypeIndex]);
+      First* dst = static_cast<First*>(dst_arrays[TypeIndex]);
+
+      memcpy(dst, src, sizeof(First) * num);
+
+      CopyArrays<RemainingTypes - 1, TypeIndex + 1, Rest...>::copy(src_arrays, dst_arrays, num);
+    }
+  };
 }
 }
