@@ -1,4 +1,7 @@
 #include "SoA.h"
+#include <iostream>
+
+using namespace johl;
 
 int main(int argc, char** argv)
 {
@@ -29,6 +32,6 @@ int main(int argc, char** argv)
 
 
   cout << __TIME__ << " hello world" << endl;
-  cout << "size: " << sizeof(Get<1, int, char, double>::Type) << endl;
-  cout << "Size::value: " << Size<int, char, double>::value << endl;
+  cout << "size: " << sizeof(detail::Get<1, int, char, double>::Type) << endl;
+  cout << "Size::value: " << detail::Size<int, char, double>::value << endl;
 }
