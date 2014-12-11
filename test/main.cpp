@@ -1,4 +1,4 @@
-#include "SoA.h"
+#include <johl/SoA.h>
 #include <iostream>
 #include <string>
 #include <memory>

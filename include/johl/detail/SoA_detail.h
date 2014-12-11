@@ -37,7 +37,8 @@ namespace detail
     static const size_t value = 0;
   };
 
-
+namespace soa
+{
 
 #if 0
 
@@ -183,5 +184,6 @@ namespace detail
       Next::swap(arrays, a, b);
     }
   };
+}
 }
 }

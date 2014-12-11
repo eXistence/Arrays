@@ -4,9 +4,9 @@ project (structure-of-arrays)
 include_directories(include)
 
 SET(HEADERS
- include/SoA.h
- include/ArrayRef.h
- include/detail/SoA_detail.h
+ include/johl/SoA.h
+ include/johl/ArrayRef.h
+ include/johl/detail/SoA_detail.h
 )
 
 SET(SOURCES

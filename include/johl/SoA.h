@@ -40,8 +40,8 @@
  * don't have to look at the inner details to use the container...
  */
 #pragma once
-#include "ArrayRef.h"
-#include "detail\SoA_detail.h"
+#include <johl/ArrayRef.h>
+#include <johl/detail/SoA_detail.h>
 #include <cassert>
 
 namespace johl
@@ -49,7 +49,7 @@ namespace johl
   template<typename... Args>
   class SoA final
   {
-    using ForEach = detail::ForEach<sizeof...(Args), 0, Args...>;
+    using ForEach = detail::soa::ForEach<sizeof...(Args), 0, Args...>;
 
     template<size_t Index>
     using Type = typename detail::Get<Index, Args...>::Type;
