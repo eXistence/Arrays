@@ -5,6 +5,7 @@ include_directories(include)
 
 SET(HEADERS
  include/SoA.h
+ include/ArrayRef.h
  include/detail/SoA_detail.h
 )
 
