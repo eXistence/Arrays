@@ -120,10 +120,10 @@ namespace soa
   template<size_t TypeIndex>
   struct ForEach<0, TypeIndex>
   {
-    static void initArray(void** arrays, void* data, size_t num) {}
+    static void initArrayPointer(void** arrays, void* data, size_t numAllocated) {}
     static void destructRange(void** arrays, size_t from, size_t num) {}
     static void constructAt(void** arrays, size_t index) {}
-    static void move(void** src_arrays, void** dst_arrays, size_t src_offset, size_t dst_offset, size_t num)  {}
+    static void moveRange(void** src_arrays, size_t src_from, void** dst_arrays, size_t dst_from, size_t num)  {}
     static void swap(void** arrays, size_t a, size_t b) {}
   };
 
@@ -132,14 +132,14 @@ namespace soa
   {
     using Next = ForEach<RemainingTypes-1, TypeIndex+1, Rest...>;
 
-    static void initArray(void** arrays, void* data, size_t num)
+    static void initArrayPointer(void** arrays, void* data, size_t numAllocated)
     {
       char** arr = (char**)arrays;
       char*  d = (char*)data;
 
       arr[TypeIndex] = d;
 
-      Next::initArray(arrays, &d[sizeof(First) * num], num);
+      Next::initArrayPointer(arrays, &d[sizeof(First) * numAllocated], numAllocated);
     }
 
     static void destructRange(void** arrays, size_t from, size_t num)
@@ -160,14 +160,14 @@ namespace soa
       Next::constructAt(arrays, index, std::forward<RestArgs>(rest)...);
     }
 
-    static void move(void** src_arrays, void** dst_arrays, size_t src_offset, size_t dst_offset, size_t num)
+    static void moveRange(void** src_arrays, size_t src_from, void** dst_arrays, size_t dst_from, size_t num)
     {
       First* src = static_cast<First*>(src_arrays[TypeIndex]);
       First* dst = static_cast<First*>(dst_arrays[TypeIndex]);
 
-      moveData(&dst[dst_offset], &src[src_offset], num);
+      moveData(&dst[dst_from], &src[src_from], num);
 
-      Next::move(src_arrays, dst_arrays, src_offset, dst_offset, num);
+      Next::moveRange(src_arrays, src_from, dst_arrays, dst_from, num);
     }
 
     static void swap(void** arrays, size_t a, size_t b)

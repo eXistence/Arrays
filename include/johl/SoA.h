@@ -96,8 +96,8 @@ namespace johl
       void* data = malloc(detail::Size<Args...>::value * n);
       void* arrays[sizeof...(Args)];
 
-      ForEach::initArray(arrays, data, n);
-      ForEach::move(m_arrays, arrays, 0, 0, m_numUsed);
+      ForEach::initArrayPointer(arrays, data, n);
+      ForEach::moveRange(m_arrays, 0, arrays, 0, m_numUsed);
 
       free(m_data);
 
@@ -163,7 +163,7 @@ namespace johl
 
       ForEach::destructRange(m_arrays, index, 1);
       --m_numUsed;
-      ForEach::move(m_arrays, m_arrays, index+1, index, m_numUsed - index);
+      ForEach::moveRange(m_arrays, index+1, m_arrays, index, m_numUsed - index);
     }
 
     template<typename... Args2>
@@ -176,7 +176,7 @@ namespace johl
 
       reserve(m_numUsed + 1);
 
-      ForEach::move(m_arrays, m_arrays, index, index+1, m_numUsed - index);
+      ForEach::moveRange(m_arrays, index, m_arrays, index+1, m_numUsed - index);
       ForEach::constructAt(m_arrays, index, std::forward<Args2>(args)...);
 
       ++m_numUsed;
