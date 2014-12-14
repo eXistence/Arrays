@@ -16,6 +16,9 @@
  * Goal is to combine the cache friendly soa approach with the ease of use of 
  * std::vector and similar container classes.
  * 
+ * You can think of it as a std::tuple of std::vectors where all vectors are 
+ * equally sized.
+ * 
  * Goals:
  *  - Use a separate array for every component, so elements of the same type are stored 
  *    sequentially in memory
@@ -46,13 +49,13 @@
 
 namespace johl
 {
-  template<typename... Args>
-  class SoA final
+  template<typename... TArrays>
+  class SoA final  
   {
-    using ForEach = detail::soa::ForEach<sizeof...(Args), 0, Args...>;
+    using ForEach = detail::soa::ForEach<sizeof...(TArrays), 0, TArrays...>;
 
     template<size_t Index>
-    using Type = typename detail::Get<Index, Args...>::Type;
+    using Type = typename detail::Get<Index, TArrays...>::Type;
 
   public:
     SoA()
@@ -93,8 +96,8 @@ namespace johl
       if(m_numAllocated >= n)
         return;
 
-      void* data = malloc(detail::Size<Args...>::value * n);
-      void* arrays[sizeof...(Args)];
+      void* data = malloc(detail::Size<TArrays...>::value * n);
+      void* arrays[sizeof...(TArrays)];
 
       ForEach::initArrayPointer(arrays, data, n);
       ForEach::moveRange(m_arrays, 0, arrays, 0, m_numUsed);
@@ -132,27 +135,27 @@ namespace johl
     } 
 
     template<size_t Index>
-    auto at(size_t i) -> typename detail::Get<Index, Args...>::Type&
+    auto at(size_t i) -> typename detail::Get<Index, TArrays...>::Type&
     {
       assert(i < m_numUsed && "index i out of range");
       return data<Index>()[i];
     }
 
     template<size_t Index>
-    auto at(size_t i) const -> const typename detail::Get<Index, Args...>::Type&
+    auto at(size_t i) const -> const typename detail::Get<Index, TArrays...>::Type&
     {
       assert(i < m_numUsed && "index i out of range");
       return data<Index>()[i];
     }
 
-    template<typename... Args2>
-    void append(Args2... args)
+    template<typename... TArgs>
+    void append(TArgs... args)
     {
-      static_assert(sizeof...(Args2) == sizeof...(Args), "number of arguments does not match number of arrays");
+      static_assert(sizeof...(TArgs) == sizeof...(TArrays), "number of arguments does not match number of arrays");
 
       reserve(m_numUsed + 1);
 
-      ForEach::constructAt(m_arrays, m_numUsed, std::forward<Args2>(args)...);
+      ForEach::constructAt(m_arrays, m_numUsed, std::forward<TArgs>(args)...);
 
       ++m_numUsed;
     }
@@ -161,23 +164,24 @@ namespace johl
     {
       assert(index < m_numUsed && "index out of range");
 
-      ForEach::destructRange(m_arrays, index, 1);
-      --m_numUsed;
+      ForEach::destructRange(m_arrays, index, 1);      
       ForEach::moveRange(m_arrays, index+1, m_arrays, index, m_numUsed - index);
+      --m_numUsed;
     }
 
-    template<typename... Args2>
-    void insertAt(size_t index, Args2... args)
+    template<typename... TArgs>
+    void insertAt(size_t index, TArgs... args)
     {
-      static_assert(sizeof...(Args2) == sizeof...(Args), 
+      static_assert(sizeof...(TArgs) == sizeof...(TArrays), 
         "number of arguments does not match number of arrays");
 
       assert(index < m_numUsed && "index out of range");
 
+      // reserve space for one extra element, move all elements after index one
+      // slot up, construct new element at free slot
       reserve(m_numUsed + 1);
-
       ForEach::moveRange(m_arrays, index, m_arrays, index+1, m_numUsed - index);
-      ForEach::constructAt(m_arrays, index, std::forward<Args2>(args)...);
+      ForEach::constructAt(m_arrays, index, std::forward<TArgs>(args)...);
 
       ++m_numUsed;
     }
@@ -191,28 +195,14 @@ namespace johl
         ForEach::swap(m_arrays, a, b);      
     }
 
-    void swap(SoA<Args...>& rhs)
+    void swap(SoA<TArrays...>& rhs)
     {
       if(this != &rhs)
       {
-        //this -> temporary
-        const auto tmp_numUsed = m_numUsed;
-        const auto tmp_numAllocated = m_numAllocated;
-        const auto tmp_data = m_data;
-        void* tmp_arrays[sizeof...(Args)];
-        memcpy(&tmp_arrays[0], &m_arrays[0], sizeof(tmp_arrays));
-
-        //rhs -> this
-        m_numUsed = rhs.m_numUsed;
-        m_numAllocated = rhs.m_numAllocated;
-        m_data = rhs.m_data;
-        memcpy(&m_arrays[0], &rhs.m_arrays[0], sizeof(tmp_arrays));
-
-        //temporary -> rhs
-        rhs.m_numUsed = tmp_numUsed;
-        rhs.m_numAllocated = tmp_numAllocated;
-        rhs.m_data = tmp_data;
-        memcpy(&rhs.m_arrays[0], &tmp_arrays[0], sizeof(tmp_arrays));
+        char buffer[sizeof(*this)];
+        memcpy(buffer, this, sizeof(*this));
+        memcpy(this, &rhs, sizeof(*this));
+        memcpy(&rhs, buffer, sizeof(*this));
       }
     }
 
@@ -220,6 +210,6 @@ namespace johl
     size_t m_numUsed;
     size_t m_numAllocated;
     void*  m_data;  
-    void*  m_arrays[sizeof...(Args)];
+    void*  m_arrays[sizeof...(TArrays)];
   };
 }

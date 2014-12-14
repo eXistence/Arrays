@@ -6,7 +6,7 @@ namespace johl
 {
 namespace detail
 {
-  template<size_t Index, typename... Args>
+  template<size_t Index, typename... TArrays>
   struct Get;
 
   template<typename First, typename... Rest>
@@ -22,7 +22,7 @@ namespace detail
     typedef typename Get<Index - 1, Rest...>::Type Type;
   };
 
-  template<typename... Args>
+  template<typename... TArrays>
   struct Size;
 
   template<typename First, typename... Rest>
@@ -42,7 +42,7 @@ namespace soa
 
 #if 0
 
-  template<size_t RemainingTypes, size_t TypeIndex, typename... Args>
+  template<size_t RemainingTypes, size_t TypeIndex, typename... TArrays>
   struct CopyArrays;
 
   template<size_t TypeIndex>
@@ -114,9 +114,11 @@ namespace soa
       }
   }
   
-  template<size_t RemainingTypes, size_t TypeIndex, typename... Args>
+  template<size_t RemainingTypes, size_t TypeIndex, typename... TArrays>
   struct ForEach;
 
+  //this specialized template (with RemainingTypes == 0) marks the end of
+  // the meta program recursion
   template<size_t TypeIndex>
   struct ForEach<0, TypeIndex>
   {
