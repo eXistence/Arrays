@@ -1,12 +1,12 @@
 cmake_minimum_required (VERSION 2.8.11)
-project (structure-of-arrays)
+project (Arrays)
 
 include_directories(include)
 
 SET(HEADERS
- include/johl/SoA.h
+ include/johl/Arrays.h
  include/johl/ArrayRef.h
- include/johl/detail/SoA_detail.h
+ include/johl/internal/Arrays_internal.h
 )
 
-add_executable("soatest" ${HEADERS} test/main.cpp)
+add_executable("arrays_test" ${HEADERS} test/main.cpp)

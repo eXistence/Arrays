@@ -1,4 +1,4 @@
-#include <johl/SoA.h>
+#include <johl/Arrays.h>
 #include <iostream>
 #include <string>
 #include <memory>
@@ -7,7 +7,7 @@ using namespace johl;
 using std::cout;
 using std::endl;
 
-using TestSoA = SoA<int, std::string, double>;
+using TestSoA = Arrays<int, std::string, double>;
 
 template<int N>
 struct is_power_of_two 

@@ -45,7 +45,7 @@
  */
 #pragma once
 #include <johl/ArrayRef.h>
-#include <johl/detail/SoA_detail.h>
+#include <johl/internal/Arrays_internal.h>
 #include <cassert>
 
 namespace johl
@@ -59,15 +59,15 @@ namespace johl
   };
 
   template<typename... TArrays>
-  class SoA final  
+  class Arrays final  
   {
-    using ForEach = detail::soa::ForEach<sizeof...(TArrays), 0, TArrays...>;
+    using ForEach = detail::arrays::ForEach<sizeof...(TArrays), 0, TArrays...>;
 
     template<size_t Index>
     using Type = typename detail::Get<Index, TArrays...>::Type;
 
   public: 
-    SoA()
+    Arrays()
       : m_numUsed(0)
       , m_numAllocated(0)
       , m_data(nullptr)
@@ -75,10 +75,10 @@ namespace johl
       memset(&m_arrays[0], 0, sizeof(m_arrays));
     }
 
-    SoA(const SoA&) = delete;
-    SoA& operator=(const SoA&) = delete;
+    Arrays(const Arrays&) = delete;
+    Arrays& operator=(const Arrays&) = delete;
 
-    ~SoA()
+    ~Arrays()
     {
       clear();
       free(m_data);
@@ -204,7 +204,7 @@ namespace johl
         ForEach::swap(m_arrays, a, b);      
     }
 
-    void swap(SoA<TArrays...>& rhs)
+    void swap(Arrays<TArrays...>& rhs)
     {
       if(this != &rhs)
       {

@@ -37,7 +37,7 @@ namespace detail
     static const size_t value = 0;
   };
 
-namespace soa
+namespace arrays
 {
 
 #if 0
