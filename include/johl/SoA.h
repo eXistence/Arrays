@@ -38,6 +38,7 @@
  *                       I would like to avoid that for such a rarely(?) used feature
  *  - Allocator support
  *  - exception safety (especially exception thrown in constructors)
+ *  - Memory alignment per array
  *  
  * [1] *shudder* yep, its ugly as hell, but it gets the job done... and hopefully you
  * don't have to look at the inner details to use the container...
@@ -49,6 +50,14 @@
 
 namespace johl
 {
+  class Allocator
+  {
+  public:
+    virtual ~Allocator() {}
+    virtual void* allocate(size_t size) = 0;
+    virtual void free(void* p) = 0;
+  };
+
   template<typename... TArrays>
   class SoA final  
   {
@@ -57,7 +66,7 @@ namespace johl
     template<size_t Index>
     using Type = typename detail::Get<Index, TArrays...>::Type;
 
-  public:
+  public: 
     SoA()
       : m_numUsed(0)
       , m_numAllocated(0)
@@ -165,7 +174,7 @@ namespace johl
       assert(index < m_numUsed && "index out of range");
 
       ForEach::destructRange(m_arrays, index, 1);      
-      ForEach::moveRange(m_arrays, index+1, m_arrays, index, m_numUsed - index);
+      ForEach::moveRange(m_arrays, index+1, m_arrays, index, m_numUsed - index - 1);
       --m_numUsed;
     }
 
@@ -186,7 +195,7 @@ namespace johl
       ++m_numUsed;
     }
 
-    void swapAt(size_t a, size_t b)
+    void swapAt(size_t a,  size_t b)
     {
       assert(a < m_numUsed && "index a out of range");
       assert(b < m_numUsed && "index b out of range");

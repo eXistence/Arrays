@@ -9,8 +9,4 @@ SET(HEADERS
  include/johl/detail/SoA_detail.h
 )
 
-SET(SOURCES
-  test/main.cpp
-)
-
-add_executable("soatest" ${HEADERS} ${SOURCES})
+add_executable("soatest" ${HEADERS} test/main.cpp)
