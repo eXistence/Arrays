@@ -47,6 +47,8 @@
 #include <johl/ArrayRef.h>
 #include <johl/internal/Arrays_internal.h>
 #include <cassert>
+#include <stdlib.h>
+#include <cstring>
 
 namespace johl
 {

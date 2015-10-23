@@ -1,6 +1,8 @@
 #pragma once
 
 #include <type_traits>
+#include <utility>
+#include <cstring>
 
 namespace johl
 {

@@ -9,4 +9,9 @@ SET(HEADERS
  include/johl/internal/Arrays_internal.h
 )
 
+
+IF(UNIX)
+	SET(CMAKE_CXX_FLAGS "-std=c++11")
+ENDIF()
+
 add_executable("arrays_test" ${HEADERS} test/main.cpp)
