@@ -47,20 +47,12 @@
 #pragma once
 #include <johl/ArrayRef.h>
 #include <johl/internal/Arrays_internal.h>
+#include <johl/Allocator.h>
 #include <cassert>
-#include <stdlib.h>
 #include <cstring>
 
 namespace johl
 {
-  class Allocator
-  {
-  public:
-    virtual ~Allocator() {}
-    virtual void* allocate(size_t size) = 0;
-    virtual void free(void* p) = 0;
-  };
-
   template<typename... TArrays>
   class Arrays final  
   {
@@ -70,11 +62,13 @@ namespace johl
     using Type = typename detail::Get<Index, TArrays...>::Type;
 
   public: 
-    Arrays()
+    explicit Arrays(Allocator* allocator = Allocator::defaultAllocator())
       : m_numUsed(0)
       , m_numAllocated(0)
+      , m_allocator(allocator)
       , m_data(nullptr)
     {
+      assert(m_allocator && "allocator must not be null");
       memset(&m_arrays[0], 0, sizeof(m_arrays));
     }
 
@@ -84,7 +78,7 @@ namespace johl
     ~Arrays()
     {
       clear();
-      free(m_data);
+      m_allocator->deallocate(m_data);
     }
 
     size_t size() const
@@ -108,13 +102,13 @@ namespace johl
       if(m_numAllocated >= n)
         return;
 
-      void* data = malloc(detail::Size<TArrays...>::value * n);
+      void* data = m_allocator->allocate(detail::Size<TArrays...>::value * n);
       void* arrays[sizeof...(TArrays)];
 
       ForEach::initArrayPointer(arrays, data, n);
       ForEach::moveRange(m_arrays, 0, arrays, 0, m_numUsed);
 
-      free(m_data);
+      m_allocator->deallocate(m_data);
 
       m_data = data;
       memcpy(&m_arrays[0], &arrays[0], sizeof(m_arrays));
@@ -207,20 +201,10 @@ namespace johl
         ForEach::swap(m_arrays, a, b);      
     }
 
-    void swap(Arrays<TArrays...>& rhs)
-    {
-      if(this != &rhs)
-      {
-        char buffer[sizeof(*this)];
-        memcpy(buffer, this, sizeof(*this));
-        memcpy(this, &rhs, sizeof(*this));
-        memcpy(&rhs, buffer, sizeof(*this));
-      }
-    }
-
   private:
     size_t m_numUsed;
     size_t m_numAllocated;
+    Allocator* m_allocator;
     void*  m_data;  
     void*  m_arrays[sizeof...(TArrays)];
   };

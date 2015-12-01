@@ -1,7 +1,6 @@
 #include <johl/Arrays.h>
 
 //std stuff
-#include <iostream>
 #include <string>
 #include <vector>
 #include <memory>
@@ -182,6 +181,68 @@ TEST(ArraysTest, SwapAt)
   EXPECT_TRUE(bools[0]);
   EXPECT_TRUE(bools[1]);
   EXPECT_FALSE(bools[2]);
+}
+
+namespace 
+{
+  class TestAllocator : public Allocator
+  {
+  public:
+    TestAllocator()
+      : allocations(0)
+      , allocator()
+    {}
+
+    virtual void* allocate(size_t size) override
+    {      
+      void* p = allocator.allocate(size);      
+      Alloc a = { p, size };
+      allocations.push_back(a);
+      return p;
+    }
+
+    virtual void deallocate(void* p) override
+    {
+      allocator.deallocate(p);
+      
+      if(p) 
+      { 
+        auto pred = [=](const Alloc& a) {return a.p == p; };
+        auto i = std::find_if(allocations.begin(), allocations.end(), pred);
+        if(i != allocations.end())
+        {
+          allocations.erase(i);
+        }
+      }
+    }
+
+    struct Alloc    
+    {
+      void* p;
+      size_t size;
+    };
+    
+    std::vector<Alloc> allocations;
+    MallocAllocator allocator;
+  };
+}
+
+TEST(ArraysTest, CustomAllocator)
+{
+  TestAllocator allocator;
+
+  {
+    Arrays<int, double> arrays(&allocator);
+
+    ASSERT_EQ(0, allocator.allocations.size());
+
+    arrays.append(1, 1.1);
+
+    ASSERT_EQ(1, allocator.allocations.size());
+    ASSERT_EQ(12, allocator.allocations[0].size); //sizeof(int) + sizeof(double) = 12
+  }
+
+  ASSERT_EQ(0, allocator.allocations.size());
 }
 
 int main(int argc, char** argv)
