@@ -66,7 +66,7 @@ struct SumAlignment<TFirst, TRest...>
 TEST(ArraysTest, EmptyInstance)
 {
   //allocate on the heap to explicitly construct and destruct the container
-  auto instance = std::make_unique<Arrays<float, int, double>>();
+  std::unique_ptr<Arrays<float,int,double>> instance(new Arrays<float,int,double>());
   ASSERT_TRUE(instance);
   EXPECT_EQ(instance->size(), 0);
   EXPECT_EQ(instance->capacity(), 0);
@@ -125,9 +125,9 @@ TEST(ArraysTest, Sequential)
   EXPECT_DOUBLE_EQ(3.3, doubles[2]);
 
   bool* bools = arrays.data<2>();
-  EXPECT_EQ(true, bools[0]);
-  EXPECT_EQ(false, bools[1]);
-  EXPECT_EQ(true, bools[2]);
+  EXPECT_TRUE(bools[0]);
+  EXPECT_FALSE(bools[1]);
+  EXPECT_TRUE(bools[2]);
 }
 
 TEST(ArraysTest, FillNonTrivialTypes)
@@ -179,9 +179,9 @@ TEST(ArraysTest, SwapAt)
   EXPECT_EQ("two", strings[2]);
 
   const bool* bools = arrays.data<2>();
-  EXPECT_EQ(true, bools[0]);
-  EXPECT_EQ(true, bools[1]);
-  EXPECT_EQ(false, bools[2]);
+  EXPECT_TRUE(bools[0]);
+  EXPECT_TRUE(bools[1]);
+  EXPECT_FALSE(bools[2]);
 }
 
 int main(int argc, char** argv)
