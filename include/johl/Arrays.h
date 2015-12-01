@@ -27,6 +27,9 @@
  *  - Use constructors/destructors (and move semantics if possible and appropriate) for 
  *    non-trivial types 
  *  - Allow easy iteration over arrays via c++11 range-based for loop
+ *  - minimal depedencies 
+ *  - support for polymorphic allocators 
+ *  - support to specify a different memory alignment for each array
  * 
  * Issues:
  *  - Naming and code convention (right now, its a mixture of std und qt style)
@@ -36,9 +39,7 @@
  *    possible solution: move data elements into a std::tuple, but that would add
  *                       a dependency to the tuple header ;(
  *                       I would like to avoid that for such a rarely(?) used feature
- *  - Allocator support
  *  - exception safety (especially exception thrown in constructors)
- *  - Memory alignment per array
  *  
  * [1] *shudder* yep, its ugly as hell, but it gets the job done... and hopefully you
  * don't have to look at the inner details to use the container...
