@@ -68,8 +68,8 @@ TEST(ArraysTest, EmptyInstance)
   //allocate on the heap to explicitly construct and destruct the container
   std::unique_ptr<Arrays<float,int,double>> instance(new Arrays<float,int,double>());
   ASSERT_TRUE(instance);
-  EXPECT_EQ(instance->size(), 0);
-  EXPECT_EQ(instance->capacity(), 0);
+  EXPECT_EQ(instance->size(), (size_t)0);
+  EXPECT_EQ(instance->capacity(), (size_t)0);
   instance.reset();
   EXPECT_FALSE(instance);
 }
@@ -79,8 +79,8 @@ TEST(ArraysTest, ReserveEmpty)
   Arrays<int, double, bool> arrays;
 
   arrays.reserve(100);
-  EXPECT_EQ(arrays.size(), 0);
-  EXPECT_EQ(arrays.capacity(), 100);
+  EXPECT_EQ(arrays.size(), (size_t)0);
+  EXPECT_EQ(arrays.capacity(), (size_t)100);
 }
 
 TEST(ArraysTest, FillTrivialTypes)
@@ -91,7 +91,7 @@ TEST(ArraysTest, FillTrivialTypes)
   arrays.append(2, 2.2, false);
   arrays.append(3, 3.3, true);
 
-  EXPECT_EQ(arrays.size(), 3);
+  EXPECT_EQ(arrays.size(), (size_t)3);
 
   EXPECT_EQ(arrays.at<0>(0), 1);
   EXPECT_EQ(arrays.at<0>(1), 2);

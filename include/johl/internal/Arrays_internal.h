@@ -4,6 +4,8 @@
 #include <utility>
 #include <cstring>
 
+#include <johl/utils.h>
+
 namespace johl
 {
 namespace detail
@@ -104,6 +106,7 @@ namespace arrays
   typename std::enable_if<std::is_trivially_destructible<T>::value, void>::type
     destructArrayElements(T* array, size_t num)
   {
+    unused(array, num);
   }
 
   template<class T>
@@ -124,11 +127,30 @@ namespace arrays
   template<size_t TypeIndex>
   struct ForEach<0, TypeIndex>
   {
-    static void initArrayPointer(void** arrays, void* data, size_t numAllocated) {}
-    static void destructRange(void** arrays, size_t from, size_t num) {}
-    static void constructAt(void** arrays, size_t index) {}
-    static void moveRange(void** src_arrays, size_t src_from, void** dst_arrays, size_t dst_from, size_t num)  {}
-    static void swap(void** arrays, size_t a, size_t b) {}
+    static void initArrayPointer(void** arrays, void* data, size_t numAllocated)
+    { 
+      unused(arrays, data, numAllocated); 
+    }
+
+    static void destructRange(void** arrays, size_t from, size_t num) 
+    { 
+      unused(arrays, from, num); 
+    }
+
+    static void constructAt(void** arrays, size_t index)
+    { 
+      unused(arrays, index);
+    }
+
+    static void moveRange(void** src_arrays, size_t src_from, void** dst_arrays, size_t dst_from, size_t num)
+    {
+      unused(src_arrays, src_from, dst_arrays, dst_from, num);
+    }
+
+    static void swap(void** arrays, size_t a, size_t b)
+    {
+      unused(arrays, a, b);
+    }
   };
 
   template<size_t RemainingTypes, size_t TypeIndex, typename First, typename... Rest>
