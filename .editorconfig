@@ -1,0 +1,11 @@
+; Config file for 'EditorConfig' plugin for Visual Studio 
+; (allow per-project configuration of tab/space settings)
+
+; Top-most EditorConfig file
+root = true
+
+; Unix-style newlines
+[*]
+end_of_line = LF
+indent_style = space
+indent_size = 2
