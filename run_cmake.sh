@@ -30,12 +30,12 @@ fi
 
 if [ "$#" -ge "2" ]; then	
 
-	if [ "$3" = "debug" ]; then
+	if [ "$2" = "debug" ]; then
 		BUILDTYPE="debug"
 		CMAKE_BUILD_TYPE="Debug"
 	fi
 
-	if [ "$3" = "release" ]; then
+	if [ "$2" = "release" ]; then
 		BUILDTYPE="release"
 		CMAKE_BUILD_TYPE="Release"
 	fi	
