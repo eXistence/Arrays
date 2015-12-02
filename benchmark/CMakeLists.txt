@@ -1,5 +1,7 @@
+# Build google benchmark
+add_subdirectory(benchmark)
+
 include_directories(../include)
-include_directories(../../benchmark/include)
 
 IF("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
   SET(COMPILER_IS_CLANG TRUE)
@@ -17,6 +19,6 @@ ELSEIF(MSVC)
   SET(CMAKE_CXX_FLAGS_RELEASE "/MT /O2")  
 ENDIF()
 
-find_package (Threads)
+
 add_executable("arrays_benchmark" main.cpp)
-target_link_libraries(arrays_benchmark ${CMAKE_THREAD_LIBS_INIT} ${CMAKE_SOURCE_DIR}/../benchmark/build/src/libbenchmark.a)
+target_link_libraries(arrays_benchmark ${CMAKE_THREAD_LIBS_INIT} benchmark)
