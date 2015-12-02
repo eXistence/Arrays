@@ -53,13 +53,31 @@
 
 namespace johl
 {
+  template<typename TType, size_t TAlign>
+  struct aligned
+  {
+    static_assert(detail::is_power_of_two<TAlign>::value, "TAlign must be power two");
+    using Type = TType;
+    static const size_t align = TAlign;
+  };
+
+  namespace detail
+  {
+    template<typename T, size_t TAlign>
+    struct AlignedType<aligned<T, TAlign>>
+    {
+      using Type = T;
+      static const size_t align = TAlign;
+    };
+  }
+
   template<typename... TArrays>
   class Arrays final  
   {
     using ForEach = detail::arrays::ForEach<sizeof...(TArrays), 0, TArrays...>;
 
     template<size_t Index>
-    using Type = typename detail::Get<Index, TArrays...>::Type;
+    using Type = typename detail::AlignedType<typename detail::Get<Index, TArrays...>::Type>::Type;
 
   public: 
     explicit Arrays(Allocator* allocator = Allocator::defaultAllocator())
@@ -102,7 +120,8 @@ namespace johl
       if(m_numAllocated >= n)
         return;
 
-      void* data = m_allocator->allocate(detail::Size<TArrays...>::value * n);
+      const size_t bytes = detail::SumSize<TArrays...>::value * n + detail::SumAlignment<TArrays...>::value;
+      void* data = m_allocator->allocate(bytes);
       void* arrays[sizeof...(TArrays)];
 
       ForEach::initArrayPointer(arrays, data, n);

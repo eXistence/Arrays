@@ -10,56 +10,33 @@
 
 using namespace johl;
 
-template<int N>
-struct is_power_of_two
-{
-  static const int value = N && !(N & (N - 1));
-};
+using johl::detail::is_power_of_two;
+static_assert(is_power_of_two<2>::value == true, "");
+static_assert(is_power_of_two<1>::value == true, "");
+static_assert(is_power_of_two<16>::value == true, "");
+static_assert(is_power_of_two<128>::value == true, "");
+static_assert(is_power_of_two<2048>::value == true, "");
+static_assert(is_power_of_two<2049>::value == false, "");
+static_assert(is_power_of_two<3>::value == false, "");
+static_assert(is_power_of_two<7>::value == false, "");
 
-template<typename TType, size_t TAlign>
-struct aligned
-{
-  static_assert(is_power_of_two<TAlign>::value, "TAlign must be power two");
-  //  static_assert( is_power_of_two<TAlign>::val != 0, "what?"):
-  using Type = TType;
-  static const size_t align = TAlign;
-};
+using johl::detail::AlignedType;
+static_assert(AlignedType<int>::align == 4, "");
+static_assert(AlignedType<aligned<int, 8>>::align == 8, "");
+static_assert(std::is_same<AlignedType<int>::Type, int>::value, "");
+static_assert(std::is_same<AlignedType<aligned<int, 8>>::Type, int>::value, "");
+static_assert(std::is_same<AlignedType<aligned<std::string, 16>>::Type, std::string>::value, "");
+static_assert(AlignedType<aligned<std::string, 16>>::align ==16, "");
 
+using johl::detail::SumAlignment;
+static_assert(SumAlignment<int, float, double>::value == 12, "");
+static_assert(SumAlignment<int>::value == 4, "");
+static_assert(SumAlignment<aligned<int,8>, aligned<float, 16>>::value == 24, "");
 
-
-
-template<typename T>
-struct AlignedType
-{
-  using Type = T;
-  static const size_t align = 4;
-};
-
-template<typename T, size_t TAlign>
-struct AlignedType<aligned<T, TAlign>>
-{
-  using Type = T;
-  static const size_t align = TAlign;
-};
-
-
-
-
-
-template<typename... Types>
-struct SumAlignment;
-
-template<typename T>
-struct SumAlignment<T>
-{
-  static const size_t value = AlignedType<T>::align;
-};
-
-template<typename TFirst, typename... TRest>
-struct SumAlignment<TFirst, TRest...>
-{
-  static const size_t value = AlignedType<TFirst>::align + SumAlignment<TRest...>::value;
-};
+using johl::detail::SumSize;
+static_assert(SumSize<int>::value == sizeof(int), "");
+static_assert(SumSize<int, float>::value == sizeof(int) + sizeof(float), "");
+static_assert(SumSize<int, float, std::string>::value == sizeof(int) + sizeof(float) + sizeof(std::string), "");
 
 
 TEST(ArraysTest, EmptyInstance)
@@ -239,10 +216,28 @@ TEST(ArraysTest, CustomAllocator)
     arrays.append(1, 1.1);
 
     ASSERT_EQ(1, allocator.allocations.size());
-    ASSERT_EQ(12, allocator.allocations[0].size); //sizeof(int) + sizeof(double) = 12
+    //default alignment = 4
+    //sizeof(int) + sizeof(double) + (2 * default alignment) = 12
+    ASSERT_EQ(20, allocator.allocations[0].size); 
   }
 
   ASSERT_EQ(0, allocator.allocations.size());
+}
+
+
+TEST(ArraysTest, Alignment)
+{
+  Arrays<aligned<int, 8>, aligned<bool, 16>> arrays;
+
+  arrays.append(1, true);
+  arrays.append(2, true);
+  arrays.append(3, false);
+
+  const int* ints = arrays.data<0>();
+  ASSERT_EQ( (uintptr_t)ints % 4, 0);
+
+  const bool* bools = arrays.data<1>();
+  ASSERT_EQ( (uintptr_t)bools % 16, 0);
 }
 
 int main(int argc, char** argv)

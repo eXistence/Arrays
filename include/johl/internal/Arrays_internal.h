@@ -3,7 +3,6 @@
 #include <type_traits>
 #include <utility>
 #include <cstring>
-
 #include <johl/utils.h>
 
 namespace johl
@@ -25,20 +24,52 @@ namespace detail
     static_assert(Index < sizeof...(Rest) + 1, "type index template parameter out of bounds");
     typedef typename Get<Index - 1, Rest...>::Type Type;
   };
-
-  template<typename... TArrays>
-  struct Size;
-
-  template<typename First, typename... Rest>
-  struct Size<First, Rest...>
+  
+  template<int N>
+  struct is_power_of_two
   {
-    static const size_t value = sizeof(First)+Size<Rest...>::value;
+    static const int value = N && !(N & (N - 1));
   };
 
-  template<>
-  struct Size<>
+  template<typename T>
+  struct AlignedType
   {
-    static const size_t value = 0;
+    using Type = T;
+    static const size_t align = 4;
+  };
+
+
+
+  template<typename... Types>
+  struct SumAlignment;
+
+  template<typename T>
+  struct SumAlignment<T>
+  {
+    static const size_t value = AlignedType<T>::align;
+  };
+
+  template<typename TFirst, typename... TRest>
+  struct SumAlignment<TFirst, TRest...>
+  {
+    static const size_t value = AlignedType<TFirst>::align + SumAlignment<TRest...>::value;
+  };
+
+
+
+  template<typename... Types>
+  struct SumSize;
+
+  template<typename T>
+  struct SumSize<T>
+  {
+    static const size_t value = sizeof(AlignedType<T>::Type);
+  };
+
+  template<typename TFirst, typename... TRest>
+  struct SumSize<TFirst, TRest...>
+  {
+    static const size_t value = sizeof(AlignedType<TFirst>::Type) + SumSize<TRest...>::value;
   };
 
 namespace arrays
@@ -152,25 +183,31 @@ namespace arrays
       unused(arrays, a, b);
     }
   };
-
+  
   template<size_t RemainingTypes, size_t TypeIndex, typename First, typename... Rest>
   struct ForEach<RemainingTypes, TypeIndex, First, Rest...>
   {
     using Next = ForEach<RemainingTypes-1, TypeIndex+1, Rest...>;
 
+    using CurrentType = typename AlignedType<First>::Type;
+    static const size_t currentAlignment = AlignedType<First>::align;
+
     static void initArrayPointer(void** arrays, void* data, size_t numAllocated)
     {
       char** arr = (char**)arrays;
-      char*  d = (char*)data;
+
+      uintptr_t p = (uintptr_t)data;
+      p = p + (currentAlignment - (p % currentAlignment));
+      char*  d = (char*)p;
 
       arr[TypeIndex] = d;
 
-      Next::initArrayPointer(arrays, &d[sizeof(First) * numAllocated], numAllocated);
+      Next::initArrayPointer(arrays, &d[sizeof(CurrentType) * numAllocated], numAllocated);
     }
 
     static void destructRange(void** arrays, size_t from, size_t num)
     {
-      First* array = static_cast<First*>(arrays[TypeIndex]);
+      CurrentType* array = static_cast<CurrentType*>(arrays[TypeIndex]);
       destructArrayElements(&array[from], num);
 
       Next::destructRange(arrays, from, num);
@@ -179,17 +216,17 @@ namespace arrays
     template<typename FirstArg, typename... RestArgs>
     static void constructAt(void** arrays, size_t index, FirstArg first, RestArgs ...rest)
     {
-      First* data = static_cast<First*>(arrays[TypeIndex]);
+      CurrentType* data = static_cast<CurrentType*>(arrays[TypeIndex]);
 
-      new (&data[index]) First(std::forward<FirstArg>(first));
+      new (&data[index]) CurrentType(std::forward<FirstArg>(first));
 
       Next::constructAt(arrays, index, std::forward<RestArgs>(rest)...);
     }
 
     static void moveRange(void** src_arrays, size_t src_from, void** dst_arrays, size_t dst_from, size_t num)
     {
-      First* src = static_cast<First*>(src_arrays[TypeIndex]);
-      First* dst = static_cast<First*>(dst_arrays[TypeIndex]);
+      CurrentType* src = static_cast<CurrentType*>(src_arrays[TypeIndex]);
+      CurrentType* dst = static_cast<CurrentType*>(dst_arrays[TypeIndex]);
 
       moveData(&dst[dst_from], &src[src_from], num);
 
@@ -198,12 +235,12 @@ namespace arrays
 
     static void swap(void** arrays, size_t a, size_t b)
     {
-      First* array = static_cast<First*>(arrays[TypeIndex]);
+      CurrentType* array = static_cast<CurrentType*>(arrays[TypeIndex]);
 
-      First& oa = array[a];
-      First& ob = array[b];
+      CurrentType& oa = array[a];
+      CurrentType& ob = array[b];
 
-      First tmp = std::move(oa);
+      CurrentType tmp = std::move(oa);
       oa = std::move(ob);
       ob = std::move(tmp);
 
