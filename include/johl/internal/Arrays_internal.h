@@ -3,6 +3,7 @@
 #include <type_traits>
 #include <utility>
 #include <cstring>
+#include <cstdint>
 #include <johl/utils.h>
 
 namespace johl
@@ -63,13 +64,13 @@ namespace detail
   template<typename T>
   struct SumSize<T>
   {
-    static const size_t value = sizeof(AlignedType<T>::Type);
+    static const size_t value = sizeof(typename AlignedType<T>::Type);
   };
 
   template<typename TFirst, typename... TRest>
   struct SumSize<TFirst, TRest...>
   {
-    static const size_t value = sizeof(AlignedType<TFirst>::Type) + SumSize<TRest...>::value;
+    static const size_t value = sizeof(typename AlignedType<TFirst>::Type) + SumSize<TRest...>::value;
   };
 
 namespace arrays
@@ -196,7 +197,7 @@ namespace arrays
     {
       char** arr = (char**)arrays;
 
-      uintptr_t p = (uintptr_t)data;
+      auto p = (std::uintptr_t)data;
       p = p + (currentAlignment - (p % currentAlignment));
       char*  d = (char*)p;
 

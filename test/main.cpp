@@ -211,17 +211,17 @@ TEST(ArraysTest, CustomAllocator)
   {
     Arrays<int, double> arrays(&allocator);
 
-    ASSERT_EQ(0, allocator.allocations.size());
+    ASSERT_EQ((size_t)0, allocator.allocations.size());
 
     arrays.append(1, 1.1);
 
-    ASSERT_EQ(1, allocator.allocations.size());
+    ASSERT_EQ((size_t)1, allocator.allocations.size());
     //default alignment = 4
     //sizeof(int) + sizeof(double) + (2 * default alignment) = 12
-    ASSERT_EQ(20, allocator.allocations[0].size); 
+    ASSERT_EQ((size_t)20, allocator.allocations[0].size); 
   }
 
-  ASSERT_EQ(0, allocator.allocations.size());
+  ASSERT_EQ((size_t)0, allocator.allocations.size());
 }
 
 
@@ -234,10 +234,10 @@ TEST(ArraysTest, Alignment)
   arrays.append(3, false);
 
   const int* ints = arrays.data<0>();
-  ASSERT_EQ( (uintptr_t)ints % 4, 0);
+  ASSERT_EQ( (uintptr_t)ints % 4, (uintptr_t)0);
 
   const bool* bools = arrays.data<1>();
-  ASSERT_EQ( (uintptr_t)bools % 16, 0);
+  ASSERT_EQ( (uintptr_t)bools % 16, (uintptr_t)0);
 }
 
 int main(int argc, char** argv)
