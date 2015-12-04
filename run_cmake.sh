@@ -8,8 +8,8 @@ BUILDTYPE="debug"
 CMAKE_BUILD_TYPE="Debug"
 CMAKE_GENERATOR="Sublime Text 2 - Unix Makefiles"
 
-if [ "$#" -ne "2" ]; then
-	echo "Usage run_cmake.sh <gcc|clang> <debug|release>"
+if [ "$#" -ne "3" -a "$#" -ne "2" ]; then
+	echo "Usage run_cmake.sh <gcc|clang> <debug|release> <libstdc++|libc++>"
 	exit 1
 fi	
 
@@ -30,20 +30,30 @@ fi
 
 if [ "$#" -ge "2" ]; then	
 
-	if [ "$3" = "debug" ]; then
+	if [ "$2" = "debug" ]; then
 		BUILDTYPE="debug"
 		CMAKE_BUILD_TYPE="Debug"
 	fi
 
-	if [ "$3" = "release" ]; then
+	if [ "$2" = "release" ]; then
 		BUILDTYPE="release"
 		CMAKE_BUILD_TYPE="Release"
 	fi	
 fi
 
 BUILDDIR=build/$COMPILER/$BUILDTYPE
+ROOTDIR=../../..
+
+if [ "$1" = "clang" -a "$#" -ge "3" ]; then	
+	echo "lets use clang with "$3
+	CXX_FLAGS=-DCMAKE_CXX_FLAGS="-stdlib=$3"
+	BUILDDIR=$BUILDDIR/$3
+	ROOTDIR=../../../..
+fi
 
 mkdir -p $BUILDDIR
 cd $BUILDDIR
 
-cmake -G"$CMAKE_GENERATOR" -DCMAKE_BUILD_TYPE=$CMAKE_BUILD_TYPE ../../..
+echo "CXX_FLAGS="$CXX_FLAGS
+
+cmake -G"$CMAKE_GENERATOR" -DCMAKE_BUILD_TYPE=$CMAKE_BUILD_TYPE -DCMAKE_CXX_FLAGS=" -stdlib=libc++ " $ROOTDIR

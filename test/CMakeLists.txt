@@ -17,7 +17,7 @@ ELSE()
 ENDIF()
 
 IF(CMAKE_COMPILER_IS_GNUCXX OR COMPILER_IS_CLANG)
-  SET(CMAKE_CXX_FLAGS "-std=c++11 -Wall -Wpedantic -Wextra")
+  SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -Wpedantic -Wextra")
 
   SET(CMAKE_CXX_FLAGS_DEBUG   "-O0 -g -fno-omit-frame-pointer")
   SET(CMAKE_CXX_FLAGS_RELEASE "-O2") 

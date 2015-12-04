@@ -5,16 +5,37 @@
 #include <cstring>
 #include <cstdint>
 
+#include <ciso646>
+
 namespace johl
 {
 namespace detail
-{
+{  
+//we assume type traits to be implemented if
+// - standard library is 'libc++' (instead of libstdc++)  
+// - compiler is msvc (type traits are implemented since VS2013/compiler version 18.x))
+// - compiler is gcc 5.x (technically its still possible that an older version of libstdc++ is used, 
+//   that does support type traits, but thats unlikely)
+#if defined(_LIBCPP_VERSION) || (_MSC_VER >= 1800) || (__GNUC__ >= 5)
   template<typename T>
   using is_trivially_copyable = std::is_trivially_copyable<T>;
 
   template<typename T>
   using is_trivially_destructible = std::is_trivially_destructible<T>;
+#elif(__GNUC__)
+//no type traits available, define our own 'poor man's type traits based on gcc language extension
+  template<typename T>
+  struct is_trivially_copyable
+  {
+    static const bool value = __has_trivial_copy(T);
+  };
 
+  template<typename T>
+  struct is_trivially_destructible
+  {
+    static const bool value = __has_trivial_destructor(T);
+  };
+#endif  
 
   template<typename... T>
   void unused(T...)
