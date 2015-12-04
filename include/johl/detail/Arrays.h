@@ -224,6 +224,7 @@ namespace arrays
 
     using CurrentType = typename AlignedType<First>::Type;
     static const size_t currentAlignment = AlignedType<First>::align;
+    static_assert(is_power_of_two<currentAlignment>::value, "alignement needs to be power of two");
 
     static void initArrayPointer(void** arrays, void* data, size_t numAllocated)
     {
