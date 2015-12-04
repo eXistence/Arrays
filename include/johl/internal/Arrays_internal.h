@@ -4,12 +4,16 @@
 #include <utility>
 #include <cstring>
 #include <cstdint>
-#include <johl/utils.h>
 
 namespace johl
 {
 namespace detail
 {
+  template<typename... T>
+  void unused(T...)
+  {
+  }
+
   template<size_t Index, typename... TArrays>
   struct Get;
 

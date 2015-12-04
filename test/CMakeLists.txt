@@ -4,7 +4,6 @@ include_directories(../include)
 include_directories(googletest/googletest/include)
 
 SET(HEADERS
- ../include/johl/utils.h
  ../include/johl/Allocator.h
  ../include/johl/Arrays.h
  ../include/johl/ArrayRef.h
