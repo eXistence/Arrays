@@ -9,6 +9,13 @@ namespace johl
 {
 namespace detail
 {
+  template<typename T>
+  using is_trivially_copyable = std::is_trivially_copyable<T>;
+
+  template<typename T>
+  using is_trivially_destructible = std::is_trivially_destructible<T>;
+
+
   template<typename... T>
   void unused(T...)
   {
@@ -110,14 +117,14 @@ namespace arrays
 #endif
   
   template<class T>
-  typename std::enable_if<std::is_trivially_destructible<T>::value && std::is_trivially_copyable<T>::value, void>::type 
+  typename std::enable_if<is_trivially_destructible<T>::value && is_trivially_copyable<T>::value, void>::type 
     moveData(T* dst, const T* src, size_t num)
   {
       memmove(dst, src, sizeof(T) * num);   
   }
 
   template<class T>
-  typename std::enable_if<!(std::is_trivially_destructible<T>::value && std::is_trivially_copyable<T>::value), void>::type
+  typename std::enable_if<!(is_trivially_destructible<T>::value && is_trivially_copyable<T>::value), void>::type
     moveData(T* dst, T* src, size_t num)
   {
       auto f = [=](size_t index)
@@ -139,14 +146,14 @@ namespace arrays
   }
   
   template<class T>
-  typename std::enable_if<std::is_trivially_destructible<T>::value, void>::type
+  typename std::enable_if<is_trivially_destructible<T>::value, void>::type
     destructArrayElements(T* array, size_t num)
   {
     unused(array, num);
   }
 
   template<class T>
-  typename std::enable_if<!std::is_trivially_destructible<T>::value, void>::type
+  typename std::enable_if<!is_trivially_destructible<T>::value, void>::type
     destructArrayElements(T* array, size_t num)
   {
       for (size_t i = 0; i < num; ++i)
