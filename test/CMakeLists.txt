@@ -7,7 +7,7 @@ SET(HEADERS
  ../include/johl/Allocator.h
  ../include/johl/Arrays.h
  ../include/johl/ArrayRef.h
- ../include/johl/internal/Arrays_internal.h
+ ../include/johl/detail/Arrays_internal.h
 )
 
 IF("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")

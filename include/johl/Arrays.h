@@ -46,7 +46,7 @@
  */
 #pragma once
 #include <johl/ArrayRef.h>
-#include <johl/internal/Arrays_internal.h>
+#include <johl/detail/Arrays_internal.h>
 #include <johl/Allocator.h>
 #include <cassert>
 #include <cstring>
