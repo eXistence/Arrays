@@ -38,7 +38,7 @@ namespace detail
 #endif  
 
   template<typename... T>
-  void unused(T...)
+  void unused(const T&...)
   {
   }
 
