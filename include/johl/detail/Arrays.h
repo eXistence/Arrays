@@ -11,11 +11,11 @@ namespace johl
 {
 namespace detail
 {  
-//we assume type traits to be implemented if
-// - standard library is 'libc++' (instead of libstdc++)  
-// - compiler is msvc (type traits are implemented since VS2013/compiler version 18.x))
+//we assume type traits to be available if
+// - standard library is 'libc++' (instead of libstdc++)  or
+// - compiler is msvc (type traits are implemented since VS2013/compiler version 18.x))  or
 // - compiler is gcc 5.x (technically its still possible that an older version of libstdc++ is used, 
-//   that does support type traits, but thats unlikely)
+//   that does not support type traits yet, but thats unlikely)
 #if defined(_LIBCPP_VERSION) || (_MSC_VER >= 1800) || (__GNUC__ >= 5)
   template<typename T>
   using is_trivially_copyable = std::is_trivially_copyable<T>;
@@ -23,7 +23,7 @@ namespace detail
   template<typename T>
   using is_trivially_destructible = std::is_trivially_destructible<T>;
 #elif(__GNUC__)
-//no type traits available, define our own 'poor man's type traits based on gcc language extension
+//no type traits available, define our own 'poor mans' type traits based on gcc language extensions
   template<typename T>
   struct is_trivially_copyable
   {
@@ -37,59 +37,87 @@ namespace detail
   };
 #endif  
 
+  /**
+   * Helper function to silence compiler warnings for unused parameters.
+   * Every halfway decent optimizer will remove calls to this function completely.
+   */
   template<typename... T>
   void unused(const T&...)
   {
   }
 
+  /**
+   * Template meta program to get the n-th type from a parameter pack (TArrays).
+   */
   template<size_t Index, typename... TArrays>
   struct Get;
 
   template<typename First, typename... Rest>
-  struct Get<0, First, Rest...>
+  struct Get<0, First, Rest...> final
   {
-    typedef First Type;
+    Get() = delete;
+    typedef First Type; //end of template meta program recursion
   };
 
   template<size_t Index, typename First, typename... Rest>
-  struct Get<Index, First, Rest...>
+  struct Get<Index, First, Rest...> final
   {
+    Get() = delete;
     static_assert(Index < sizeof...(Rest) + 1, "type index template parameter out of bounds");
     typedef typename Get<Index - 1, Rest...>::Type Type;
   };
   
+  /**
+   * check at compile time, if N is a power of two
+   */
   template<int N>
-  struct is_power_of_two
+  struct is_power_of_two final
   {
+    is_power_of_two() = delete;
+
     static const int value = N && !(N & (N - 1));
   };
-
+  
+  /**
+   * AlignedType::Type is always the actual type.
+   * AlignedType::align is the default alignment.
+   * this type will be specialized for the 'align' tag type, that override the
+   * alignment.
+   */
   template<typename T>
-  struct AlignedType
+  struct AlignedType final
   {
+    AlignedType() = delete;
     using Type = T;
     static const size_t align = 4;
-  };
+  }; 
 
-
-
+  /**
+   * template meta program to calculate the sum of all alignments for a given
+   * list of types.
+   */
   template<typename... Types>
   struct SumAlignment;
 
   template<typename T>
-  struct SumAlignment<T>
+  struct SumAlignment<T> final
   {
+    SumAlignment() = delete;
     static const size_t value = AlignedType<T>::align;
   };
 
   template<typename TFirst, typename... TRest>
-  struct SumAlignment<TFirst, TRest...>
+  struct SumAlignment<TFirst, TRest...> final
   {
+    SumAlignment() = delete;
     static const size_t value = AlignedType<TFirst>::align + SumAlignment<TRest...>::value;
   };
 
 
-
+  /**
+   * template meta program to calculate the sum of all sizes for a given
+   * list of types.
+   */
   template<typename... Types>
   struct SumSize;
 
@@ -135,8 +163,13 @@ namespace arrays
     }
   };
 
-#endif
-  
+#endif  
+
+  /**
+   * move trivial data from src to dst by calling memmove.
+   * 
+   * This function is removed from overload resolution if type T is not trivially destructible or not trivially copyable.
+   */
   template<class T>
   typename std::enable_if<is_trivially_destructible<T>::value && is_trivially_copyable<T>::value, void>::type 
     moveData(T* dst, const T* src, size_t num)
@@ -144,14 +177,23 @@ namespace arrays
       memmove(dst, src, sizeof(T) * num);   
   }
 
+  /**
+   * move non-trivial data from src to dst.
+   * 'move' means in this case:
+   *   - move-construct object at dst[i] (assumes dst is raw memory! moves from src[i])
+   *   - destruct old (moved-from) object at src[i]
+   *   - does not allocate any memory, does not free any memory
+   *   
+   * This function is removed from overload resolution if type T is trivially destructible and trivially copyable.
+   */
   template<class T>
   typename std::enable_if<!(is_trivially_destructible<T>::value && is_trivially_copyable<T>::value), void>::type
     moveData(T* dst, T* src, size_t num)
   {
       auto f = [=](size_t index)
       {
-        new (&dst[index]) T(std::move(src[index]));
-        src[index].~T();
+        new (&dst[index]) T(std::move(src[index])); //move-construct at dst
+        src[index].~T();                            //destruct old object
       };
 
       if (dst < src)
@@ -166,6 +208,10 @@ namespace arrays
       }
   }
   
+  /**
+   * Call destructor for a given range of objects.    
+   * Enabled only for trivially destructible types (does nothing).
+   */
   template<class T>
   typename std::enable_if<is_trivially_destructible<T>::value, void>::type
     destructArrayElements(T* array, size_t num)
@@ -173,6 +219,10 @@ namespace arrays
     unused(array, num);
   }
 
+  /**
+   * Call destructor for a given range of objects. 
+   * Disabled for trivially destructible types.
+   */
   template<class T>
   typename std::enable_if<!is_trivially_destructible<T>::value, void>::type
     destructArrayElements(T* array, size_t num)
@@ -183,11 +233,14 @@ namespace arrays
       }
   }
   
+  /**
+   * 
+   */
   template<size_t RemainingTypes, size_t TypeIndex, typename... TArrays>
   struct ForEach;
 
   //this specialized template (with RemainingTypes == 0) marks the end of
-  // the meta program recursion
+  // the template meta program recursion
   template<size_t TypeIndex>
   struct ForEach<0, TypeIndex>
   {

@@ -6,11 +6,11 @@ Introduction
 
 A generic implementation of a struct-of-arrays (soa) container. Inspired by a couple of articles and talks about data oriented design (DOD).
 
-more details to DOD coming soon.
+(More details on DOD coming soon)
 
 Managing soa-like data in a language like C is pretty straight-forward and simple. Thats beeing said, it is still a bit cumbersome and is prone to errors, especially if you need to change the structure of your data (adding and removing elements, changing types, tweaking layout, sizes and alignment). I wondered if modern C++11 with its variadic templates and template meta programming can be of any use here. Goal is to combine the cache friendly soa approach with the ease of use and type safety of std::vector and similar container classes.
 
-more details to soa coming soon.
+(More details on soa coming soon)
 
 Features
 ===============

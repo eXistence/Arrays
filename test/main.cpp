@@ -160,6 +160,28 @@ TEST(ArraysTest, SwapAt)
   EXPECT_FALSE(bools[2]);
 }
 
+
+TEST(ArraysTest, RangeBasedForLoop)
+{
+  Arrays<int, std::string, bool> arrays;
+
+  arrays.append(1, "one", true);
+  arrays.append(2, "two", false);
+  arrays.append(3, "three", true);
+
+  int ints[3] = { 0 };
+  int i=0;
+  for(const auto& value : arrays.array<0>()) {
+    ASSERT_TRUE(i<3);
+    ints[i++] = value;
+  }
+  
+  EXPECT_EQ(i, 3);
+  EXPECT_EQ(ints[0], 1);
+  EXPECT_EQ(ints[1], 2);
+  EXPECT_EQ(ints[2], 3);
+}
+
 namespace 
 {
   class TestAllocator : public Allocator

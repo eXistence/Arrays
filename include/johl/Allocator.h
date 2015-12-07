@@ -38,7 +38,7 @@ namespace johl
 
   inline Allocator* Allocator::defaultAllocator()
   {
-    static MallocAllocator a; //threadsafe since C+11, thanks to 'magic static'
+    static MallocAllocator a; //threadsafe since C+11, thanks to 'magic statics'
     return &a;
   }
 }
