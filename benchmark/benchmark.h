@@ -34,7 +34,7 @@ struct Vec4
 
 struct Name
 {
-  char value[32];
+  char value[64];
 };
 
 struct Transform
@@ -47,9 +47,9 @@ struct Entity
 {
   bool active;
   unsigned id;  
-  Vec4 position;
+  Vec4 position;  
   Vec4 velocity;
-  Name debugname;
+  Name debugname;  
 };
 
 
@@ -66,16 +66,16 @@ inline Entity createEntity(std::mt19937& generator, float threshold)
 }
 
 //=============================================================================
-// AosSimpleContainer32
+// EntityVector
 //=============================================================================
 
-using AosSimpleContainer32 = std::vector<Entity>;
+using EntityVector = std::vector<Entity>;
 
-void setup(benchmark::State& state, AosSimpleContainer32& container);
-void update(AosSimpleContainer32& container);
-void verify(AosSimpleContainer32& container);
+void setup(benchmark::State& state, EntityVector& container);
+void update(EntityVector& container);
+void verify(EntityVector& container);
 
-inline void setup(benchmark::State& state, AosSimpleContainer32& container)
+inline void setup(benchmark::State& state, EntityVector& container)
 {
   container.reserve(state.range_x());
 
@@ -88,7 +88,7 @@ inline void setup(benchmark::State& state, AosSimpleContainer32& container)
   }  
 }
 
-inline void update(AosSimpleContainer32& container)
+inline void update(EntityVector& container)
 {
   const size_t size = container.size();
 
@@ -103,23 +103,23 @@ inline void update(AosSimpleContainer32& container)
   }
 }
 
-inline void verify(AosSimpleContainer32& container)
+inline void verify(EntityVector& container)
 {  
   unused(container);
 }
 
 
 //=============================================================================
-// AosSimpleContainer32
+// EntityVector
 //=============================================================================
 
-using SoaSimpleContainer32 = johl::Arrays<bool, unsigned, johl::aligned<Vec4, 16>, aligned<Vec4, 16>, Name>;
+using EntityArrays = johl::Arrays<bool, unsigned, johl::aligned<Vec4, 16>, aligned<Vec4, 16>, Name>;
 
-void setup(benchmark::State& state, SoaSimpleContainer32& container);
-void update(SoaSimpleContainer32& container);
-void verify(SoaSimpleContainer32& container);
+void setup(benchmark::State& state, EntityArrays& container);
+void update(EntityArrays& container);
+void verify(EntityArrays& container);
 
-inline void setup(benchmark::State& state, SoaSimpleContainer32& container)
+inline void setup(benchmark::State& state, EntityArrays& container)
 {
   container.reserve(state.range_x());
 
@@ -132,7 +132,7 @@ inline void setup(benchmark::State& state, SoaSimpleContainer32& container)
   }  
 }
 
-inline void update(SoaSimpleContainer32& container)
+inline void update(EntityArrays& container)
 {
   const size_t size = container.size();
   const bool* active = container.data<0>();
@@ -148,23 +148,23 @@ inline void update(SoaSimpleContainer32& container)
   }
 }
 
-inline void verify(SoaSimpleContainer32& container)
+inline void verify(EntityArrays& container)
 {  
   unused(container);
 }
 
 
 //=============================================================================
-// SoaTransformContainer32
+// EntityArrays2
 //=============================================================================
 
-using SoaTransformContainer32 = johl::Arrays<bool, unsigned, Transform, Name>;
+using EntityArrays2 = johl::Arrays<bool, unsigned, Transform, Name>;
 
-void setup(benchmark::State& state, SoaTransformContainer32& container);
-void update(SoaTransformContainer32& container);
-void verify(SoaTransformContainer32& container);
+void setup(benchmark::State& state, EntityArrays2& container);
+void update(EntityArrays2& container);
+void verify(EntityArrays2& container);
 
-inline void setup(benchmark::State& state, SoaTransformContainer32& container)
+inline void setup(benchmark::State& state, EntityArrays2& container)
 {
   container.reserve(state.range_x());
 
@@ -177,7 +177,7 @@ inline void setup(benchmark::State& state, SoaTransformContainer32& container)
   }  
 }
 
-inline void update(SoaTransformContainer32& container)
+inline void update(EntityArrays2& container)
 {
   const size_t size = container.size();
   const bool* active = container.data<0>();
@@ -193,7 +193,7 @@ inline void update(SoaTransformContainer32& container)
   }
 }
 
-inline void verify(SoaTransformContainer32& container)
+inline void verify(EntityArrays2& container)
 {  
   unused(container);
 }

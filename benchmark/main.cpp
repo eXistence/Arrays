@@ -1,29 +1,14 @@
 #include <benchmark/benchmark.h>
 #include "benchmark.h"
 
-static void AosSimple(benchmark::State& state) {  
-  AosSimpleContainer32 entities;
-
-  setup(state, entities);
-  
-  while (state.KeepRunning()) 
-  {    
-    update(entities);
-  }    
-
-  verify(entities);
-}
-
 static const int minPercentage = 0;
 static const int maxPercentage = 100;
-static const int minEntities = 100;
-static const int maxEntities = 100000;
+static const int minEntities = 1<<6;
+static const int maxEntities = 1<<15;
 
-// Register the function as a benchmark
-BENCHMARK(AosSimple)->RangePair(minEntities, maxEntities, minPercentage, maxPercentage);
-
-static void SoaSimple(benchmark::State& state) {  
-  SoaSimpleContainer32 entities;
+template <class Q, int i> 
+void BM_Sequential(benchmark::State& state) {  
+  Q entities;
 
   setup(state, entities);
   
@@ -32,24 +17,11 @@ static void SoaSimple(benchmark::State& state) {
     update(entities);
   }    
 
-  verify(entities);    
+  verify(entities);      
 }
-// Register the function as a benchmark
-BENCHMARK(SoaSimple)->RangePair(minEntities, maxEntities, minPercentage, maxPercentage);
 
-static void SoaTransform(benchmark::State& state) {  
-  SoaTransformContainer32 entities;
-
-  setup(state, entities);
-  
-  while (state.KeepRunning()) 
-  {    
-    update(entities);
-  }    
-
-  verify(entities);     
-}
-// Register the function as a benchmark
-BENCHMARK(SoaTransform)->RangePair(minEntities, maxEntities, minPercentage, maxPercentage);
+BENCHMARK_TEMPLATE2(BM_Sequential, EntityVector, 16)->RangePair(minEntities, maxEntities, minPercentage, maxPercentage);
+BENCHMARK_TEMPLATE2(BM_Sequential, EntityArrays, 16)->RangePair(minEntities, maxEntities, minPercentage, maxPercentage);
+BENCHMARK_TEMPLATE2(BM_Sequential, EntityArrays2, 16)->RangePair(minEntities, maxEntities, minPercentage, maxPercentage);
 
 BENCHMARK_MAIN()
