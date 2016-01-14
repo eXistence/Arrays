@@ -34,7 +34,7 @@ struct Vec4
 
 struct Name
 {
-  char value[64];
+  char value[32];
 };
 
 struct Transform
@@ -71,19 +71,15 @@ inline Entity createEntity(std::mt19937& generator, float threshold)
 
 using EntityVector = std::vector<Entity>;
 
-void setup(benchmark::State& state, EntityVector& container);
-void update(EntityVector& container);
-void verify(EntityVector& container);
-
-inline void setup(benchmark::State& state, EntityVector& container)
+inline void setup(int num, float active, EntityVector& container)
 {
-  container.reserve(state.range_x());
+  container.reserve(num);
 
   std::mt19937 generator(0);
   
-  for(int i=0;i<state.range_x(); ++i)
+  for(int i=0;i<num; ++i)
   {
-    Entity e = createEntity(generator, state.range_y()/100.0f );
+    Entity e = createEntity(generator, active );
     container.push_back(e);
   }  
 }
@@ -91,21 +87,17 @@ inline void setup(benchmark::State& state, EntityVector& container)
 inline void update(EntityVector& container)
 {
   const size_t size = container.size();
+  Entity* entities = container.data();
 
   for(size_t i=0;i<size; ++i)
   {
-    Entity& e = container[i];
+    Entity& e = entities[i];
 
     if(e.active)
     {
       e.position += e.velocity * 0.1f;
     }
   }
-}
-
-inline void verify(EntityVector& container)
-{  
-  unused(container);
 }
 
 
@@ -115,19 +107,15 @@ inline void verify(EntityVector& container)
 
 using EntityArrays = johl::Arrays<bool, unsigned, johl::aligned<Vec4, 16>, aligned<Vec4, 16>, Name>;
 
-void setup(benchmark::State& state, EntityArrays& container);
-void update(EntityArrays& container);
-void verify(EntityArrays& container);
-
-inline void setup(benchmark::State& state, EntityArrays& container)
+inline void setup(int num, float active, EntityArrays& container)
 {
-  container.reserve(state.range_x());
+  container.reserve(num);
 
   std::mt19937 generator(0);
 
-  for(int i=0;i<state.range_x(); ++i)
+  for(int i=0;i<num; ++i)
   {
-    Entity e = createEntity(generator,  state.range_y()/100.0f );
+    Entity e = createEntity(generator, active);
     container.append(e.active, e.id, e.position, e.velocity, e.debugname);
   }  
 }
@@ -148,11 +136,6 @@ inline void update(EntityArrays& container)
   }
 }
 
-inline void verify(EntityArrays& container)
-{  
-  unused(container);
-}
-
 
 //=============================================================================
 // EntityArrays2
@@ -160,19 +143,15 @@ inline void verify(EntityArrays& container)
 
 using EntityArrays2 = johl::Arrays<bool, unsigned, Transform, Name>;
 
-void setup(benchmark::State& state, EntityArrays2& container);
-void update(EntityArrays2& container);
-void verify(EntityArrays2& container);
-
-inline void setup(benchmark::State& state, EntityArrays2& container)
+inline void setup(int num, float active, EntityArrays2& container)
 {
-  container.reserve(state.range_x());
+  container.reserve(num);
 
   std::mt19937 generator(0);
 
-  for(int i=0;i<state.range_x(); ++i)
+  for(int i=0;i<num; ++i)
   {
-    Entity e = createEntity(generator,  state.range_y()/100.0f );
+    Entity e = createEntity(generator, active);
     container.append(e.active, e.id, Transform{e.position, e.velocity}, e.debugname);
   }  
 }
@@ -191,9 +170,4 @@ inline void update(EntityArrays2& container)
       t.position += t.velocity * 0.1f;
     }
   }
-}
-
-inline void verify(EntityArrays2& container)
-{  
-  unused(container);
 }
